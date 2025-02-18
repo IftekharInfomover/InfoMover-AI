@@ -11,7 +11,7 @@ MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 client = Mistral(api_key=MISTRAL_API_KEY)
 
 #### Streamlit UI
-st.set_page_config(page_title="InfoMoverAI", page_icon="🤖" , layout="wide")
+st.set_page_config(page_title="InfoMover AI", page_icon="🤖" , layout="wide")
 
 #### Chat history
 if "messages" not in st.session_state:
@@ -25,6 +25,11 @@ with st.sidebar:
     st.title("📌 InfoMoverAI")
     st.write("Your AI assistant")
 
+    # Clear chat history button
+    if st.button("🗑️ Clear Chat History"):
+        st.session_state.messages = []  # Reset chat history
+        st.rerun()  # Refresh the UI to reflect the changes
+
 left_spacer, chat_container, right_spacer = st.columns([1, 2, 1])
 
 with chat_container:
@@ -37,7 +42,7 @@ with chat_container:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-#### **🚀 Dynamic Input Box (Fixed at Bottom)**
+#### ** Dynamic Input Box (Fixed at Bottom)**
 input_placeholder = (
     "Hey there, I'm InfoMover AI... Ask me anything:"
     if not st.session_state.messages
