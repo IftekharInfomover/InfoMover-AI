@@ -16,11 +16,24 @@ st.set_page_config(page_title="InfoMover AI", page_icon="🤖" , layout="wide")
 #### Chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "selected_model" not in st.session_state:
+    st.session_state.selected_model = "mistral-large-latest"
 
 def clear_input():
     st.session_state['user_input'] = ""
 
 #### Layout setup: Sidebar + Centered Chat Window
+
+left_column, right_column = st.columns([0.3, 0.7])
+
+with left_column:
+    st.selectbox(
+        "Select AI Model",
+        ["mistral-small", "mistral-medium", "mistral-large-latest"],
+        index=["mistral-small", "mistral-medium", "mistral-large-latest"].index(st.session_state.selected_model),
+        key="selected_model", label_visibility="hidden"
+    )
+
 with st.sidebar:
     st.title("📌 InfoMoverAI")
     st.write("Your AI assistant")
@@ -57,7 +70,7 @@ if user_input:
 
     #### Generate AI response
     response = client.chat.complete(
-        model="mistral-large-latest",
+        model=st.session_state.selected_model,
         messages=st.session_state.messages
     )
     bot_reply = response.choices[0].message.content
