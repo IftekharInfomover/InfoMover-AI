@@ -40,8 +40,8 @@ with st.sidebar:
 
     #### Clear chat history button
     if st.button("🗑️ Clear Chat History"):
-        st.session_state.messages = []  # Reset chat history
-        st.rerun()  # Refresh the UI to reflect the changes
+        st.session_state.messages = []  ### Reset chat history
+        st.rerun()  ### Refresh the UI to reflect the changes
 
 left_spacer, chat_container, right_spacer = st.columns([1, 2, 1])
 
@@ -55,12 +55,7 @@ with chat_container:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-    # #### Create a placeholder for the streaming response
-    # if "response_placeholder" not in st.session_state:
-    #     st.session_state.response_placeholder = None
-
-
-#### ** Dynamic Input Box (Fixed at Bottom)**
+#### Dynamic Input Box (Fixed at Bottom)
 input_placeholder = (
     "Hey there, I'm InfoMover AI... Ask me anything:"
     if not st.session_state.messages
@@ -73,8 +68,7 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.rerun()
 
-
-# Separate processing logic after UI update
+#### Separate processing logic after UI update
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     user_message = st.session_state.messages[-1]
 
@@ -101,9 +95,6 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             #### Final update without the cursor
             response_placeholder.markdown(full_response)
 
-
-
-    # bot_reply = response.choices[0].message.content
     #### Add AI response to chat history
     st.session_state.messages.append({"role": "assistant", "content": full_response})
     st.rerun()
