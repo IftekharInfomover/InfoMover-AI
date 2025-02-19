@@ -11,56 +11,97 @@ MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 client = Mistral(api_key=MISTRAL_API_KEY)
 
 #### Streamlit UI
-st.set_page_config(page_title="InfoMoverAI", page_icon="🤖" , layout="wide")
+st.set_page_config(page_title="InfoMover AI", page_icon="🤖" , layout="wide")
 
 #### Chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "selected_model" not in st.session_state:
+    st.session_state.selected_model = "mistral-large-latest"
 
 def clear_input():
     st.session_state['user_input'] = ""
 
 #### Layout setup: Sidebar + Centered Chat Window
+
+left_column, right_column = st.columns([0.3, 0.7])
+
+with left_column:
+    st.selectbox(
+        "Select AI Model",
+        ["mistral-small", "mistral-medium", "mistral-large-latest"],
+        index=["mistral-small", "mistral-medium", "mistral-large-latest"].index(st.session_state.selected_model),
+        key="selected_model", label_visibility="hidden"
+    )
+
 with st.sidebar:
     st.title("📌 InfoMoverAI")
     st.write("Your AI assistant")
+
+    #### Clear chat history button
+    if st.button("🗑️ Clear Chat History"):
+        st.session_state.messages = []  ### Reset chat history
+        st.rerun()  ### Refresh the UI to reflect the changes
 
 left_spacer, chat_container, right_spacer = st.columns([1, 2, 1])
 
 with chat_container:
     st.title("🤖 InfoMover AI")
 
-#### Display chat messages
-    for message in st.session_state['messages']:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    #### Display chat messages inside an empty placeholder
+    chat_area = st.empty()
+    with chat_area.container():  #### Ensures chat messages stay above input
+        for message in st.session_state['messages']:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+#### Dynamic Input Box (Fixed at Bottom)
+input_placeholder = (
+    "Hey there, I'm InfoMover AI... Ask me anything:"
+    if not st.session_state.messages
+    else "Send a message"
+)
+user_input = st.chat_input(input_placeholder)  # Dynamic placeholder
+
+if user_input:
+    #### Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    st.rerun()
+
+#### Separate processing logic after UI update
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+    user_message = st.session_state.messages[-1]
 
 
-#### Dynamic input box positioning
-    if not st.session_state['messages']:
-        chat_input_container = st.container()
-        with chat_input_container:
-            user_input = st.chat_input("Hey there, I'm Infomover AI at your service. Ask me anything: ")
-    else:
-        user_input = st.chat_input("Send a Message ")
+    #### Create a placeholder for the assistant's response
+    with chat_container:
+        with st.chat_message("assistant"):
+            response_placeholder = st.empty()
+            full_response = ""
 
-    if user_input:
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": user_input})
-    # clear_input()
+            # Generate streaming response
+            stream = client.chat.stream(
+                model=st.session_state.selected_model,
+                messages=st.session_state.messages
+            )
 
-    # Generate AI response
-        response = client.chat.complete(
-            model="mistral-large-latest",
-            messages=st.session_state.messages
-        )
-        bot_reply = response.choices[0].message.content
+            #### Process the stream
+            for chunk in stream:
+                if chunk.data.choices[0].delta.content is not None:
+                    full_response += chunk.data.choices[0].delta.content
+                    # Update the response in real-time
+                    response_placeholder.markdown(full_response + "▌")
 
-    # Add AI response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-        st.rerun()
+            #### Final update without the cursor
+            response_placeholder.markdown(full_response)
+
+    #### Add AI response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
+    st.rerun()
 
 
+
+### Started working on Real-time response streaming
 
 
 
