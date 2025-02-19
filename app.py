@@ -38,7 +38,7 @@ with st.sidebar:
     st.title("📌 InfoMoverAI")
     st.write("Your AI assistant")
 
-    # Clear chat history button
+    #### Clear chat history button
     if st.button("🗑️ Clear Chat History"):
         st.session_state.messages = []  # Reset chat history
         st.rerun()  # Refresh the UI to reflect the changes
@@ -55,6 +55,11 @@ with chat_container:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
+    #### Create a placeholder for the streaming response
+    if "response_placeholder" not in st.session_state:
+        st.session_state.response_placeholder = None
+
+
 #### ** Dynamic Input Box (Fixed at Bottom)**
 input_placeholder = (
     "Hey there, I'm InfoMover AI... Ask me anything:"
@@ -68,14 +73,34 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     # clear_input()
 
-    #### Generate AI response
-    response = client.chat.complete(
-        model=st.session_state.selected_model,
-        messages=st.session_state.messages
-    )
-    bot_reply = response.choices[0].message.content
+
+    #### Create a placeholder for the assistant's response
+    with chat_container:
+        with st.chat_message("assistant"):
+            response_placeholder = st.empty()
+            full_response = ""
+
+            # Generate streaming response
+            stream = client.chat.stream(
+                model=st.session_state.selected_model,
+                messages=st.session_state.messages
+            )
+
+            #### Process the stream
+            for chunk in stream:
+                if chunk.data.choices[0].delta.content is not None:
+                    full_response += chunk.data.choices[0].delta.content
+                    # Update the response in real-time
+                    response_placeholder.markdown(full_response + "▌")
+
+            #### Final update without the cursor
+            response_placeholder.markdown(full_response)
+
+
+
+    # bot_reply = response.choices[0].message.content
     #### Add AI response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
     st.rerun()
 
 
