@@ -55,9 +55,9 @@ with chat_container:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-    #### Create a placeholder for the streaming response
-    if "response_placeholder" not in st.session_state:
-        st.session_state.response_placeholder = None
+    # #### Create a placeholder for the streaming response
+    # if "response_placeholder" not in st.session_state:
+    #     st.session_state.response_placeholder = None
 
 
 #### ** Dynamic Input Box (Fixed at Bottom)**
@@ -71,7 +71,12 @@ user_input = st.chat_input(input_placeholder)  # Dynamic placeholder
 if user_input:
     #### Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": user_input})
-    # clear_input()
+    st.rerun()
+
+
+# Separate processing logic after UI update
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+    user_message = st.session_state.messages[-1]
 
 
     #### Create a placeholder for the assistant's response
